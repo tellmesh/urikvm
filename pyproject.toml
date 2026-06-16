@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "urikvm"
+version = "0.1.0"
+description = "kvm:// URI capability pack for urisys-node"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{ name = "urisys contributors" }, { name = "Tom Sapletta", email = "tom@sapletta.com" }]
+keywords = ["uri", "urisys", "urikvm"]
+dependencies = ["urisysedge>=0.1.0"]
+
+[project.optional-dependencies]
+real = ["mss>=9.0", "Pillow>=10.0"]
+dev = ["pytest>=8.0", "goal>=2.1.0"]
+
+[tool.uv.sources]
+urisysedge = { path = "../urisysedge", editable = true }
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["urikvm*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
