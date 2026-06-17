@@ -15,17 +15,30 @@ dependencies = ["urisysedge>=0.1.0"]
 
 [project.optional-dependencies]
 real = ["mss>=9.0", "Pillow>=10.0"]
-dev = ["pytest>=8.0", "goal>=2.1.0",
+dev = [
+    "pytest>=8.0",
+    "goal>=2.1.0",
+    "uricore>=0.1.8",
+    "urihim",
+    "urillm",
+    "uriocr",
     "costs>=0.1.20",
     "pfix>=0.1.60",
 ]
 
 [tool.uv.sources]
 urisysedge = { path = "../urisysedge", editable = true }
+uricore = { path = "../uricore", editable = true }
+urihim = { path = "../urihim", editable = true }
+urillm = { path = "../urillm", editable = true }
+uriocr = { path = "../uriocr", editable = true }
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["urikvm*"]
+
+[tool.setuptools.package-data]
+urikvm = ["manifest.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

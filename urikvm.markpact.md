@@ -1,3 +1,165 @@
+# UriPack: urikvm
+
+Self-contained Markpact — definitions, full source, run config. Unpack & run: `urisys markpact run urikvm/urikvm.markpact.md --as service` (writes `.markpact/`).
+
+```yaml markpact:pack
+apiVersion: urisys.io/v1
+kind: UriPack
+metadata:
+  id: urikvm-pack
+  version: 1.0.0
+  language: python
+description: KVM monitor capture and OCR/LLM-assisted desktop tasks.
+schemes:
+- kvm
+capabilities:
+- id: kvm.monitor.list
+  uri: kvm://{host}/monitor/query/list
+  kind: query
+  operation: kvm.monitor.list
+  handler: python://urikvm.handlers:monitor_list
+  side_effects: false
+  approval: not_required
+- id: kvm.display.info
+  uri: kvm://{host}/display/query/info
+  kind: query
+  operation: kvm.display.info
+  handler: python://urikvm.handlers:display_info
+  side_effects: false
+  approval: not_required
+- id: kvm.monitor.screenshot
+  uri: kvm://{host}/monitor/{monitor}/query/screenshot
+  kind: query
+  operation: kvm.monitor.screenshot
+  handler: python://urikvm.handlers:screenshot
+  side_effects: false
+  approval: not_required
+- id: kvm.task.click_text
+  uri: kvm://{host}/task/command/click-text
+  kind: command
+  operation: kvm.task.click_text
+  handler: python://urikvm.handlers:click_text
+  side_effects: true
+  approval: required
+- id: kvm.task.type_text
+  uri: kvm://{host}/task/command/type-text
+  kind: command
+  operation: kvm.task.type_text
+  handler: python://urikvm.handlers:type_text
+  side_effects: true
+  approval: required
+policy:
+  default: deny_mutations_without_approval
+runtime:
+  default_environment: mock
+  supports:
+  - mock
+  - local
+  - docker
+```
+
+```yaml markpact:run
+modes:
+- pack
+- service
+- flow
+- interface
+- adapter
+default: service
+scheme: kvm
+service:
+  port: 8790
+  wire: POST /uri/call
+flow:
+  ids:
+  - gui-open-software-center
+  - llm-guided-gui-click
+adapter:
+  wire: POST /uri/call
+  events: GET /events
+```
+
+```python markpact:module path=urikvm/__init__.py
+from __future__ import annotations
+
+from importlib.resources import files
+
+from .routes import register
+
+__all__ = ["register", "manifest_path"]
+
+
+def manifest_path():
+    return files(__package__).joinpath("manifest.yaml")
+```
+
+```python markpact:module path=urikvm/display.py
+from __future__ import annotations
+
+import os
+import subprocess
+from pathlib import Path
+from typing import Any
+
+
+def config_value(context: dict[str, Any], key: str, default=None):
+    cfg = context.get("config") or {}
+    return cfg.get(key, default)
+
+
+def detect_display(context: dict[str, Any]) -> str:
+    # Priority: explicit context, env, config default, scan X sockets.
+    if context.get("display"):
+        return str(context["display"])
+    if os.environ.get("URISYS_KVM_DISPLAY"):
+        return os.environ["URISYS_KVM_DISPLAY"]
+    if os.environ.get("URISYS_RDP_DISPLAY"):
+        return os.environ["URISYS_RDP_DISPLAY"]
+    if os.environ.get("DISPLAY"):
+        return os.environ["DISPLAY"]
+    default = config_value(context, "default_display")
+    if default:
+        return str(default)
+    sockets = sorted(Path("/tmp/.X11-unix").glob("X*"))
+    if sockets:
+        return ":" + sockets[0].name[1:]
+    return ":10"
+
+
+def base_env(context: dict[str, Any]) -> dict[str, str]:
+    env = os.environ.copy()
+    env["DISPLAY"] = detect_display(context)
+    xauth = (
+        context.get("xauthority")
+        or os.environ.get("XAUTHORITY")
+        or config_value(context, "xauthority")
+    )
+    if not xauth:
+        user = config_value(context, "session_user", "urisys")
+        candidate = Path(f"/home/{user}/.Xauthority")
+        if candidate.exists():
+            xauth = str(candidate)
+    if xauth:
+        env["XAUTHORITY"] = str(xauth)
+    return env
+
+
+def allow_real(context: dict[str, Any]) -> bool:
+    return bool(context.get("allow_real") or os.environ.get("URISYS_ALLOW_REAL") == "1")
+
+
+def run_cmd(args: list[str], context: dict[str, Any], *, timeout: int = 20) -> subprocess.CompletedProcess:
+    return subprocess.run(args, env=base_env(context), text=True, capture_output=True, timeout=timeout, check=False)
+
+
+def ensure_screenshot_dir(context: dict[str, Any]) -> Path:
+    path = config_value(context, "screenshot_dir", "data/screenshots")
+    p = Path(path)
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+```
+
+```python markpact:module path=urikvm/handlers.py
 import base64
 import io
 import shutil
@@ -165,3 +327,81 @@ def type_text(payload, context):
     host = context.get('params', {}).get('host', 'local')
     text = payload.get('text', '')
     return runtime.call(f'him://{host}/keyboard/command/type', {'text': text}, {**context, 'approved': True})
+```
+
+```python markpact:module path=urikvm/routes.py
+from __future__ import annotations
+
+from importlib.resources import files
+
+from urisysedge.manifest import register_manifest_file
+
+
+def register(runtime):
+    register_manifest_file(runtime, files(__package__).joinpath("manifest.yaml"))
+```
+
+```yaml markpact:flow id=gui-open-software-center
+flow:
+  id: gui-open-software-center
+  description: Open Software Center via keyboard and click Updates (desktop GUI / HIM + KVM).
+
+defaults:
+  approved: true
+  dry_run: true
+
+do:
+  - him://local/keyboard/command/hotkey:
+      keys: ["super"]
+  - him://local/keyboard/command/type-text:
+      text: Software
+  - him://local/keyboard/command/key:
+      key: Return
+  - kvm://local/monitor/primary/query/screenshot
+  - ocr://local/image/latest/query/text
+  - kvm://local/task/command/click-text:
+      text: Updates
+```
+
+```yaml markpact:flow id=llm-guided-gui-click
+flow:
+  id: llm-guided-gui-click
+  description: Screenshot, OCR, LLM vision analyze, then click Install (KVM + OCR + LLM).
+
+defaults:
+  approved: true
+  dry_run: true
+
+do:
+  - kvm://local/monitor/primary/query/screenshot
+  - ocr://local/image/latest/query/text
+  - llm://local/vision/query/analyze:
+      target_text: Install
+  - kvm://local/task/command/click-text:
+      text: Install
+```
+
+```markdown markpact:docs
+# urikvm
+
+
+## AI Cost Tracking
+
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.1-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.15-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-1.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+
+- 🤖 **LLM usage:** $0.1500 (1 commits)
+- 👤 **Human dev:** ~$100 (1.0h @ $100/h, 30min dedup)
+
+Generated on 2026-06-16 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+
+---
+
+
+
+
+## License
+
+Licensed under Apache-2.0.
+```
+

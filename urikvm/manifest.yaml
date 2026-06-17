@@ -1,0 +1,37 @@
+id: urikvm
+version: 1
+scheme: kvm
+description: KVM monitor capture and OCR/LLM-assisted desktop tasks.
+uri_patterns:
+  - pattern: kvm://{host}/monitor/query/list
+    kind: query
+    operation: kvm.monitor.list
+    side_effects: false
+    approval: not_required
+  - pattern: kvm://{host}/display/query/info
+    kind: query
+    operation: kvm.display.info
+    side_effects: false
+    approval: not_required
+  - pattern: kvm://{host}/monitor/{monitor}/query/screenshot
+    kind: query
+    operation: kvm.monitor.screenshot
+    side_effects: false
+    approval: not_required
+  - pattern: kvm://{host}/task/command/click-text
+    kind: command
+    operation: kvm.task.click_text
+    side_effects: true
+    approval: required
+  - pattern: kvm://{host}/task/command/type-text
+    kind: command
+    operation: kvm.task.type_text
+    side_effects: true
+    approval: required
+handlers:
+  python:
+    kvm.monitor.list: python://urikvm.handlers:monitor_list
+    kvm.display.info: python://urikvm.handlers:display_info
+    kvm.monitor.screenshot: python://urikvm.handlers:screenshot
+    kvm.task.click_text: python://urikvm.handlers:click_text
+    kvm.task.type_text: python://urikvm.handlers:type_text

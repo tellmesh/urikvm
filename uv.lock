@@ -3293,6 +3293,45 @@ wheels = [
 ]
 
 [[package]]
+name = "uricore"
+version = "0.1.8"
+source = { editable = "../uricore" }
+dependencies = [
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "urihim"
+version = "0.1.5"
+source = { editable = "../urihim" }
+dependencies = [
+    { name = "urisysedge" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
+    { name = "pyautogui", marker = "extra == 'real'", specifier = ">=0.9.54" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "uricore", marker = "extra == 'dev'", editable = "../uricore" },
+    { name = "urisysedge", editable = "../urisysedge" },
+]
+provides-extras = ["real", "dev"]
+
+[[package]]
 name = "urikvm"
 version = "0.1.1"
 source = { editable = "." }
@@ -3306,6 +3345,10 @@ dev = [
     { name = "goal" },
     { name = "pfix" },
     { name = "pytest" },
+    { name = "uricore" },
+    { name = "urihim" },
+    { name = "urillm" },
+    { name = "uriocr" },
 ]
 real = [
     { name = "mss" },
@@ -3320,14 +3363,68 @@ requires-dist = [
     { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
     { name = "pillow", marker = "extra == 'real'", specifier = ">=10.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "uricore", marker = "extra == 'dev'", editable = "../uricore" },
+    { name = "urihim", marker = "extra == 'dev'", editable = "../urihim" },
+    { name = "urillm", marker = "extra == 'dev'", editable = "../urillm" },
+    { name = "uriocr", marker = "extra == 'dev'", editable = "../uriocr" },
     { name = "urisysedge", editable = "../urisysedge" },
 ]
 provides-extras = ["real", "dev"]
 
 [[package]]
+name = "urillm"
+version = "0.1.0"
+source = { editable = "../urillm" }
+dependencies = [
+    { name = "pyyaml" },
+    { name = "urioperators" },
+    { name = "urisysedge" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "litellm", marker = "extra == 'vision'", specifier = ">=1.40" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "uricore", marker = "extra == 'dev'", editable = "../uricore" },
+    { name = "urioperators", editable = "../urioperators" },
+    { name = "urisysedge", editable = "../urisysedge" },
+]
+provides-extras = ["vision", "dev"]
+
+[[package]]
+name = "uriocr"
+version = "0.1.0"
+source = { editable = "../uriocr" }
+dependencies = [
+    { name = "urisysedge" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
+    { name = "pillow", marker = "extra == 'real'", specifier = ">=10.0" },
+    { name = "pytesseract", marker = "extra == 'real'", specifier = ">=0.3.10" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "uricore", marker = "extra == 'dev'", editable = "../uricore" },
+    { name = "urisysedge", editable = "../urisysedge" },
+]
+provides-extras = ["real", "dev"]
+
+[[package]]
+name = "urioperators"
+version = "0.1.0"
+source = { editable = "../urioperators" }
+
+[[package]]
 name = "urisysedge"
 version = "0.1.1"
 source = { editable = "../urisysedge" }
+dependencies = [
+    { name = "pyyaml" },
+    { name = "uricore" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -3335,6 +3432,8 @@ requires-dist = [
     { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
     { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "uricore", specifier = ">=0.1.8" },
 ]
 provides-extras = ["dev"]
 
