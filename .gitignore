@@ -18,6 +18,7 @@ __pycache__/
 .urisys
 # C extensions
 *.so
+data
 
 # Distribution / packaging
 .Python

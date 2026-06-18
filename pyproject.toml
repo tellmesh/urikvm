@@ -22,6 +22,7 @@ dev = [
     "urihim",
     "urillm",
     "uriocr",
+    "urikvmedge",
     "costs>=0.1.20",
     "pfix>=0.1.60",
 ]
@@ -31,6 +32,7 @@ uricontrol = { path = "../uricontrol", editable = true }
 urihim = { path = "../urihim", editable = true }
 urillm = { path = "../urillm", editable = true }
 uriocr = { path = "../uriocr", editable = true }
+urikvmedge = { path = "../urikvmedge", editable = true }
 
 [tool.setuptools.packages.find]
 where = ["."]
