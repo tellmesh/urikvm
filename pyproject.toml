@@ -11,14 +11,14 @@ requires-python = ">=3.10"
 license = "Apache-2.0"
 authors = [{ name = "urisys contributors" }, { name = "Tom Sapletta", email = "tom@sapletta.com" }]
 keywords = ["uri", "urisys", "urikvm"]
-dependencies = ["uricore>=0.1.8"]
+dependencies = ["uricontrol>=0.1.8"]
 
 [project.optional-dependencies]
 real = ["mss>=9.0", "Pillow>=10.0"]
 dev = [
     "pytest>=8.0",
     "goal>=2.1.0",
-    "uricore>=0.1.8",
+    "uricontrol>=0.1.8",
     "urihim",
     "urillm",
     "uriocr",
@@ -27,7 +27,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-uricore = { path = "../uricore", editable = true }
+uricontrol = { path = "../uricontrol", editable = true }
 urihim = { path = "../urihim", editable = true }
 urillm = { path = "../urillm", editable = true }
 uriocr = { path = "../uriocr", editable = true }
