@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 import shutil
 import time
 import uuid
@@ -7,6 +8,39 @@ from pathlib import Path
 from typing import Any
 
 from .display import allow_real, detect_display, ensure_screenshot_dir, run_cmd
+
+
+def _is_wayland() -> bool:
+    return (
+        os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
+        or bool(os.environ.get("WAYLAND_DISPLAY"))
+    )
+
+
+def _capture_wayland(monitor, context, payload):
+    """Wayland capture via uriscreen's portal/vdisplay backend chain (with mss-black
+    retry). mss alone returns black frames on Wayland, so reuse the proven screen pack.
+    Returns a result dict, or None when uriscreen is unavailable (caller falls back)."""
+    try:
+        from uriscreen.backends import capture_with_fallback
+    except Exception:
+        return None
+    tmp = Path("/tmp/urikvm-wayland.png")
+    cap = capture_with_fallback(tmp, 1, context, payload)
+    png = Path(cap["path"]).read_bytes()
+    backend = cap.get("backend_used") or cap.get("backend") or "portal"
+    entry = _store_screenshot(
+        context, monitor, backend, "image/png", png, cap.get("width"), cap.get("height")
+    )
+    return {
+        "image_id": entry["image_id"],
+        "monitor": monitor,
+        "driver": backend,
+        "mime": entry["mime"],
+        "base64": entry["base64"],
+        "width": cap.get("width"),
+        "height": cap.get("height"),
+    }
 
 
 def _profile(context):
@@ -89,7 +123,24 @@ def screenshot(payload, context):
             'base64': entry['base64'],
             'captured': True,
         }
-    if driver == 'mss' and not context.get('dry_run'):
+    # Wayland-aware capture: mss returns black frames on Wayland, so on a Wayland session
+    # (or explicit auto/portal driver) delegate to uriscreen's portal/vdisplay backend.
+    if (
+        driver in ('mss', 'auto', 'portal')
+        and not context.get('dry_run')
+        and (_is_wayland() or driver in ('auto', 'portal'))
+    ):
+        if not context.get('allow_real'):
+            raise PermissionError('real screenshot requires context.allow_real=true')
+        wl = _capture_wayland(monitor, context, payload)
+        if wl is not None:
+            return wl
+        # uriscreen not installed; on Wayland mss would be black — surface a clear hint.
+        if _is_wayland():
+            raise RuntimeError(
+                'Wayland capture needs uriscreen (portal backend): pip install "urikvm[real]" or uriscreen'
+            )
+    if driver in ('mss', 'auto') and not context.get('dry_run'):
         if not context.get('allow_real'):
             raise PermissionError('real screenshot requires context.allow_real=true')
         try:

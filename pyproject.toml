@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "urikvm"
-version = "0.1.1"
+version = "0.1.2"
 description = "kvm:// URI capability pack for urisys-node"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,7 +14,8 @@ keywords = ["uri", "urisys", "urikvm"]
 dependencies = ["uricontrol>=0.1.8"]
 
 [project.optional-dependencies]
-real = ["mss>=9.0", "Pillow>=10.0"]
+# uriscreen provides the Wayland portal/vdisplay capture backend (mss is X11-only / black on Wayland).
+real = ["mss>=9.0", "Pillow>=10.0", "uriscreen>=0.1.0"]
 dev = [
     "pytest>=8.0",
     "goal>=2.1.0",
