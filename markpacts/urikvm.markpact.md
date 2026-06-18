@@ -77,7 +77,7 @@ modes:
 - interface
 - adapter
 service:
-  port: 8794
+  port_hint: 8794
   path: /uri/call
 flow:
   ids:
