@@ -138,7 +138,8 @@ def screenshot(payload, context):
         # uriscreen not installed; on Wayland mss would be black — surface a clear hint.
         if _is_wayland():
             raise RuntimeError(
-                'Wayland capture needs uriscreen (portal backend): pip install "urikvm[real]" or uriscreen'
+                'Wayland capture needs the uriscreen portal backend (GitHub-only; normally '
+                'installed by the urisys node bootstrap). Install uriscreen on this node.'
             )
     if driver in ('mss', 'auto') and not context.get('dry_run'):
         if not context.get('allow_real'):
