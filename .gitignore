@@ -15,7 +15,7 @@ __pycache__/
 *.py[codz]
 *$py.class
 .nlp2dsl
-
+.urisys
 # C extensions
 *.so
 

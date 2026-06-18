@@ -2,6 +2,7 @@ import base64
 import io
 import shutil
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +38,9 @@ def _tiny_png() -> bytes:
 
 
 def _store_screenshot(context, monitor, driver, mime, raw_bytes, width=None, height=None):
+    image_id = f"shot-{uuid.uuid4().hex[:12]}"
     entry = {
+        'image_id': image_id,
         'monitor': monitor,
         'driver': driver,
         'mime': mime,
@@ -46,7 +49,9 @@ def _store_screenshot(context, monitor, driver, mime, raw_bytes, width=None, hei
         'height': height,
         'captured_at': time.time(),
     }
-    context.setdefault('state', {})['latest_screenshot'] = entry
+    state = context.setdefault('state', {})
+    state['latest_screenshot'] = entry
+    state.setdefault('images', {})[image_id] = entry
     return entry
 
 
@@ -75,6 +80,7 @@ def screenshot(payload, context):
         raw = latest.read_bytes()
         entry = _store_screenshot(context, monitor, 'scrot/import', 'image/png', raw)
         return {
+            'image_id': entry['image_id'],
             'monitor': monitor,
             'driver': 'scrot/import',
             'path': str(latest),
@@ -99,6 +105,7 @@ def screenshot(payload, context):
             png = buf.getvalue()
             entry = _store_screenshot(context, monitor, driver, 'image/png', png, shot.width, shot.height)
             return {
+                'image_id': entry['image_id'],
                 'monitor': monitor,
                 'driver': driver,
                 'mime': entry['mime'],
@@ -109,7 +116,14 @@ def screenshot(payload, context):
     text = f'Mock screenshot {monitor} {time.time()} with buttons: Start OK Cancel'
     raw = text.encode('utf-8')
     entry = _store_screenshot(context, monitor, driver, 'text/plain', raw)
-    return {'monitor': monitor, 'driver': driver, 'mime': entry['mime'], 'base64': entry['base64'], 'text': text}
+    return {
+        'image_id': entry['image_id'],
+        'monitor': monitor,
+        'driver': driver,
+        'mime': entry['mime'],
+        'base64': entry['base64'],
+        'text': text,
+    }
 
 
 def click_text(payload, context):
